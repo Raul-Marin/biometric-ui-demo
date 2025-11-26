@@ -111,6 +111,7 @@
       font-size: 2.5rem;
       font-weight: 700;
       background: linear-gradient(to right, #fff, #cbd5e1);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -208,9 +209,13 @@
     </div>
   </div>
 
-  <div id="status">Iniciando sistema...</div>
+  <div id="status">Cargando modelos...</div>
 
-  <!-- Cargar face-api.js desde CDN -->
+  <footer style="margin-top: 2rem; font-size: 0.8rem; color: #888; opacity: 0.8;">
+    Proyecto experimental de Raul Marin para probar las evoluciones de los Design Systems y la IA Generativa.
+  </footer>
+
+  <!-- Cargar face-api.js desde CDN para asegurar integridad -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
   <script>
