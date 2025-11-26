@@ -6,208 +6,328 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Demo UI Generativa - Biometría</title>
   <style>
+    :root {
+      --primary-color: #3b82f6;
+      --bg-color: #0f172a;
+      --card-bg: rgba(255, 255, 255, 0.1);
+      --text-color: #f8fafc;
+    }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
-      background-color: #f0f2f5;
-      transition: background-color 0.5s ease;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      overflow: hidden;
+      transition: background-color 1s ease;
     }
 
-    /* Contenedor principal */
+    /* Background Carousel */
+    #bg-carousel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .bg-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+      filter: blur(20px) brightness(0.6);
+    }
+
+    .bg-image.active {
+      opacity: 1;
+    }
+
+    /* Main Container */
     .container {
-      text-align: center;
+      display: flex;
+      gap: 40px;
+      align-items: center;
+      z-index: 10;
+    }
+
+    /* Video & Canvas Wrapper */
+    .video-wrapper {
       position: relative;
+      width: 480px;
+      height: 360px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    /* Video de la webcam (lo mostramos pequeño para feedback) */
     #video {
-      width: 320px;
-      height: 240px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      margin-bottom: 20px;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       transform: scaleX(-1);
-      /* Efecto espejo */
+      /* Mirror effect */
     }
 
-    /* La UI Card que cambia */
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+      /* Mirror canvas too */
+    }
+
+    /* UI Card */
     .ui-card {
-      background: white;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       padding: 40px;
       border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
       width: 400px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-      border: 2px solid transparent;
+      text-align: left;
     }
 
     .ui-card h1 {
       margin: 0 0 10px 0;
-      font-size: 2rem;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .ui-card p {
-      font-size: 1.2rem;
-      color: #555;
+      font-size: 1.1rem;
+      color: #cbd5e1;
       margin: 0;
+      line-height: 1.6;
     }
 
-    /* Estados de la UI */
+    .ui-card .badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* UI States */
     .ui-card.neutral {
-      border-color: #3498db;
-      background-color: #eaf6ff;
+      border-top: 4px solid #3b82f6;
     }
 
-    .ui-card.neutral h1 {
-      color: #2980b9;
+    .ui-card.neutral .badge {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
     }
 
     .ui-card.happy {
-      border-color: #2ecc71;
-      background-color: #eafaf1;
-      transform: scale(1.05);
+      border-top: 4px solid #22c55e;
+      transform: scale(1.02);
     }
 
-    .ui-card.happy h1 {
-      color: #27ae60;
+    .ui-card.happy .badge {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
     }
 
     .ui-card.sad {
-      /* Usamos 'sad' para ceño fruncido/tensión */
-      border-color: #e74c3c;
-      background-color: #fdedec;
+      border-top: 4px solid #ef4444;
     }
 
-    .ui-card.sad h1 {
-      color: #c0392b;
+    .ui-card.sad .badge {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
     }
 
-    /* Estado de carga */
-    #status {
+    /* Image Carousel in Card */
+    .card-image {
+      width: 100%;
+      height: 200px;
+      border-radius: 16px;
       margin-top: 20px;
-      color: #777;
-      font-style: italic;
+      background-size: cover;
+      background-position: center;
+      transition: background-image 0.5s ease-in-out;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    #status {
+      position: absolute;
+      bottom: 20px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
-    <!-- Video oculto hasta que cargue -->
-    <video id="video" autoplay muted playsinline></video>
-
-    <div id="ui-card" class="ui-card neutral">
-      <h1>Esperando rostro...</h1>
-      <p>Iniciando sistema de biometría...</p>
-    </div>
-
-    <div id="status">Cargando modelos...</div>
+  <!-- Background Carousel -->
+  <div id="bg-carousel">
+    <div class="bg-image active" id="bg-neutral" style="background-image: url('images/neutral.png')"></div>
+    <div class="bg-image" id="bg-happy" style="background-image: url('images/happy.png')"></div>
+    <div class="bg-image" id="bg-sad" style="background-image: url('images/sad.png')"></div>
   </div>
 
-  <!-- Cargar face-api.js desde CDN para asegurar integridad -->
+  <div class="container">
+    <!-- Video & Biometric Grid -->
+    <div class="video-wrapper">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <!-- Generative UI Card -->
+    <div id="ui-card" class="ui-card neutral">
+      <span class="badge">Sistema Estable</span>
+      <h1>Neutral</h1>
+      <p>Interfaz balanceada. Detectando parámetros biométricos estables.</p>
+      <div class="card-image" style="background-image: url('images/neutral.png')"></div>
+    </div>
+  </div>
+
+  <div id="status">Iniciando sistema...</div>
+
+  <!-- Cargar face-api.js desde CDN -->
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
   <script>
     const video = document.getElementById('video');
+    const canvas = document.getElementById('overlay');
     const uiCard = document.getElementById('ui-card');
     const statusText = document.getElementById('status');
     const cardTitle = uiCard.querySelector('h1');
     const cardDesc = uiCard.querySelector('p');
+    const cardBadge = uiCard.querySelector('.badge');
+    const cardImage = uiCard.querySelector('.card-image');
 
-    // Configuración
+    // Background elements
+    const bgNeutral = document.getElementById('bg-neutral');
+    const bgHappy = document.getElementById('bg-happy');
+    const bgSad = document.getElementById('bg-sad');
+
     const MODEL_URL = './models';
 
     async function loadModels() {
       try {
-        statusText.innerText = "Cargando Tiny Face Detector...";
+        statusText.innerText = "Cargando modelos biométricos...";
         await faceapi.loadTinyFaceDetectorModel(MODEL_URL);
-
-        statusText.innerText = "Cargando Face Landmark 68...";
         await faceapi.loadFaceLandmarkModel(MODEL_URL);
-
-        statusText.innerText = "Cargando Face Expression...";
         await faceapi.loadFaceExpressionModel(MODEL_URL);
-
         startVideo();
       } catch (err) {
-        console.error("Error cargando modelos:", err);
+        console.error("Error:", err);
         statusText.innerText = "Error: " + err.message;
       }
     }
 
-    loadModels();
-
-    // 2. Iniciar video
     function startVideo() {
-      statusText.innerText = "Solicitando cámara...";
       navigator.mediaDevices.getUserMedia({ video: {} })
         .then(stream => {
           video.srcObject = stream;
-          statusText.innerText = "Detectando...";
+          statusText.innerText = "Sistema activo";
         })
-        .catch(err => {
-          console.error(err);
-          statusText.innerText = "Error accediendo a la cámara.";
-        });
+        .catch(err => console.error("Camera error:", err));
     }
 
-    // 3. Loop de detección
+    loadModels();
+
     video.addEventListener('play', () => {
+      // Ajustar canvas al tamaño del video
+      const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
+      faceapi.matchDimensions(canvas, displaySize);
+
       setInterval(async () => {
-        // Detectar rostro y expresiones
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
           .withFaceLandmarks()
           .withFaceExpressions();
 
-        if (detections.length > 0) {
-          // Tomamos la primera cara detectada
-          const expressions = detections[0].expressions;
+        // Limpiar canvas
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          // Buscamos la expresión dominante
+        if (detections.length > 0) {
+          const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+          // Dibujar landmarks (Grid biométrico)
+          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+
+          // Obtener expresión
+          const expressions = detections[0].expressions;
           const dominant = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
 
           updateUI(dominant);
         } else {
-          // Si no hay cara, volver a neutral o estado de espera
           updateUI('neutral');
         }
-      }, 200); // Ejecutar cada 200ms para no saturar
+      }, 100);
     });
 
-    // 4. Actualizar UI según expresión
     function updateUI(expression) {
-      // Limpiar clases previas
+      // Reset classes
       uiCard.classList.remove('neutral', 'happy', 'sad');
+
+      // Reset backgrounds
+      bgNeutral.classList.remove('active');
+      bgHappy.classList.remove('active');
+      bgSad.classList.remove('active');
 
       switch (expression) {
         case 'happy':
           uiCard.classList.add('happy');
-          cardTitle.innerText = "🙂 Estás sonriendo";
-          cardDesc.innerText = "Generando UI positiva y vibrante.";
+          bgHappy.classList.add('active');
+
+          cardBadge.innerText = "Energía Positiva";
+          cardTitle.innerText = "Alegría";
+          cardDesc.innerText = "Detectando sonrisa. Generando interfaz vibrante y optimista.";
+          cardImage.style.backgroundImage = "url('images/happy.png')";
           break;
 
         case 'sad':
         case 'angry':
         case 'disgusted':
         case 'fearful':
-          // Agrupamos expresiones negativas
           uiCard.classList.add('sad');
-          cardTitle.innerText = "😟 Detecto tensión";
-          cardDesc.innerText = "Adaptando UI para reducir carga cognitiva.";
+          bgSad.classList.add('active');
+
+          cardBadge.innerText = "Modo Adaptativo";
+          cardTitle.innerText = "Tensión";
+          cardDesc.innerText = "Detectando estrés. Simplificando UI para reducir carga cognitiva.";
+          cardImage.style.backgroundImage = "url('images/sad.png')";
           break;
 
         case 'neutral':
         case 'surprised':
         default:
           uiCard.classList.add('neutral');
-          cardTitle.innerText = "😐 Estado neutral";
-          cardDesc.innerText = "Interfaz estable y balanceada.";
+          bgNeutral.classList.add('active');
+
+          cardBadge.innerText = "Sistema Estable";
+          cardTitle.innerText = "Neutral";
+          cardDesc.innerText = "Interfaz balanceada. Detectando parámetros biométricos estables.";
+          cardImage.style.backgroundImage = "url('images/neutral.png')";
           break;
       }
     }
